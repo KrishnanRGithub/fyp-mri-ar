@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+
+    <title>Babylon.js sample code</title>
+
+    <!-- Babylon.js -->
+
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="/babylonjs.loaders.js"></script>
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((reg) => {
+                        console.log('%cA Service Worker is installed Successfully and is ACTIVE for the scope:', 'color: #4cd137;', reg.scope)
+
+                    })
+                    .catch((err) => {
+                        console.log('%cService Worker Installation FAILED. ', 'color: #f39c12; font-size: 1.5rem;')
+                        console.log('%cReason: ', 'color: #f39c12;', err)
+                    })
+            })
+        }
+
+
+    </script>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var startRenderLoop = function (engine, canvas) {
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        }
+
+        var engine = null;
+        var organFinal = null
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, disableWebGL2Support: false }); };
+        const loadMesh = async (scene, material, pos, scale, dir, fileName) => {
+            BABYLON.SceneLoader.ImportMesh(
+                "",
+                dir,
+                fileName,
+                scene,
+                function (meshes) {
+                    var organMesh = meshes[0]
+                    // create a blue material
+
+                    organMesh.position = pos
+                    organMesh.scale = scale
+
+                    // assign the material to the sphere mesh
+                    organMesh.material = material;////
+                    console.log(meshes)
+                });
+
+        }
+
+
+        const createScene = async () => {
+            var scene = new BABYLON.Scene(engine);
+            var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 10, new BABYLON.Vector3(0, 0, 0), scene);
+            camera.setPosition(new BABYLON.Vector3(20, 200, 400));
+            camera.attachControl(canvas, true);
+
+
+            camera.upperBetaLimit = (Math.PI / 2) * 0.99;
+
+            // Light
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 0, 0), scene);
+            light.intensity = 2;
+
+
+            var tumorMat = new BABYLON.StandardMaterial("tumorMat", scene);
+            tumorMat.diffuseColor = new BABYLON.Color3(1, 0, 0); // set diffuse color to blue
+            var organMat = new BABYLON.StandardMaterial("organMat", scene);
+            organMat.diffuseColor = new BABYLON.Color3(0, 0, 0); // set diffuse color to blue
+            organMat.alpha = 0.2;
+            meshPos = new BABYLON.Vector3(0, -3, 180)
+            meshScale = new BABYLON.Vector3(0.5, 0.5, 0.5)
+            organPos = new BABYLON.Vector3(0, -3, 180)
+
+            // await loadMesh(scene, tumorMat, meshPos, meshScale, "https://models.babylonjs.com/Channel9/", "Channel9.stl")
+
+            await loadMesh(scene, tumorMat, meshPos, meshScale, "/just tumor/", "t_flair.stl")
+            await loadMesh(scene, tumorMat, meshPos, meshScale, "/just tumor/", "t_t1.stl")
+            await loadMesh(scene, tumorMat, meshPos, meshScale, "/just tumor/", "t_t2.stl")
+            await loadMesh(scene, tumorMat, meshPos, meshScale, "/just tumor/", "t_t1ce.stl")
+            await loadMesh(scene, organMat, organPos, meshScale, "/scenes/", "t1.stl")
+
+
+
+            var xr = await scene.createDefaultXRExperienceAsync({
+                uiOptions: {
+                    sessionMode: 'immersive-ar',
+                },
+                optionalFeatures: false,
+            });
+
+
+
+            return scene;
+        }
+        window.initFunction = async function () {
+
+
+            var asyncEngineCreation = async function () {
+                try {
+                    return createDefaultEngine();
+                } catch (e) {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+
+            window.engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            startRenderLoop(engine, canvas);
+            window.scene = await createScene();
+        };
+        initFunction().then(() => {
+            sceneToRender = scene
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+
+</html>
