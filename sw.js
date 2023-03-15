@@ -1,5 +1,5 @@
 
-const CACHE = "content-v042" // Name of the Current Cache
+const CACHE = "content-v044" // Name of the Current Cache
 const DOWNLOADS = "downloads"  // Name of the Downloads Cache - For BG Fetch API
 const OFFLINE = "/offline" // The Offline HTML Page
 
